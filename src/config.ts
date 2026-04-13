@@ -44,6 +44,25 @@ Do NOT use for tweet search -- use twitter_search_tweets instead. Do NOT use for
         },
         required: ["username"],
       },
+      outputSchema: {
+        type: "object",
+        properties: {
+          username: { type: "string", description: "Twitter/X handle" },
+          displayName: { type: "string", description: "Full display name" },
+          bio: { type: "string", description: "Profile bio text" },
+          followers: { type: "number", description: "Follower count" },
+          following: { type: "number", description: "Following count" },
+          tweetCount: { type: "number", description: "Total tweets posted" },
+          verified: { type: "boolean", description: "Blue checkmark status" },
+          createdAt: { type: "string", description: "Account creation date" },
+          avatarUrl: { type: "string", description: "Profile picture URL" },
+          bannerUrl: { type: "string", description: "Header image URL" },
+          location: { type: "string", description: "Stated location" },
+          website: { type: "string", description: "Linked website URL" },
+          pinnedTweet: { type: "string", description: "Text of pinned tweet if any" },
+        },
+        required: ["username", "displayName", "followers", "following", "tweetCount"],
+      },
     },
     {
       method: "POST",
@@ -78,6 +97,38 @@ Do NOT use for profile data -- use twitter_scrape_profile instead. Do NOT use fo
         },
         required: ["query"],
       },
+      outputSchema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query used" },
+          resultCount: { type: "number", description: "Number of tweets found" },
+          results: {
+            type: "array",
+            description: "Array of matching tweets",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                text: { type: "string" },
+                author: {
+                  type: "object",
+                  properties: {
+                    username: { type: "string" },
+                    displayName: { type: "string" },
+                  },
+                },
+                createdAt: { type: "string" },
+                likes: { type: "number" },
+                retweets: { type: "number" },
+                replies: { type: "number" },
+                views: { type: "number" },
+                url: { type: "string" },
+              },
+            },
+          },
+        },
+        required: ["query", "resultCount", "results"],
+      },
     },
     {
       method: "POST",
@@ -110,6 +161,32 @@ Do NOT use for profile bio/stats -- use twitter_scrape_profile instead. Do NOT u
           },
         },
         required: ["username"],
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          username: { type: "string", description: "Twitter/X handle queried" },
+          tweetCount: { type: "number", description: "Number of tweets returned" },
+          tweets: {
+            type: "array",
+            description: "Array of recent tweets",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                text: { type: "string" },
+                createdAt: { type: "string" },
+                likes: { type: "number" },
+                retweets: { type: "number" },
+                replies: { type: "number" },
+                views: { type: "number" },
+                isRetweet: { type: "boolean" },
+                isReply: { type: "boolean" },
+              },
+            },
+          },
+        },
+        required: ["username", "tweetCount", "tweets"],
       },
     },
   ],
