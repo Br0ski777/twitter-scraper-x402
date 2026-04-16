@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { healthResponse, buildPaymentConfig, setupMcp } from "./shared";
 import { API_CONFIG } from "./config";
-import { registerRoutes } from "./logic";
+import { registerRoutes, registerInternalRoutes } from "./logic";
 
 const app = new Hono();
 app.use("*", cors());
@@ -13,6 +13,10 @@ app.get("/", (c) => c.json(healthResponse(API_CONFIG.name)));
 app.get("/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
 setupMcp(app, API_CONFIG);
+
+// Internal endpoints — NOT under /api/ so NOT gated by x402
+// Protected by a simple shared key instead
+registerInternalRoutes(app);
 
 async function setupPayments() {
   try {

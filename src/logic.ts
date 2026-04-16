@@ -316,6 +316,25 @@ function parseTweetsFromHtml(html: string): TweetData[] {
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
+// ─── Internal Routes (no x402, key-protected) ─────────────────────────────
+
+const INTERNAL_KEY = process.env.INTERNAL_KEY || "x402-internal-7cfE-bot";
+
+export function registerInternalRoutes(app: Hono) {
+  app.post("/internal/search", async (c) => {
+    if (c.req.header("x-internal-key") !== INTERNAL_KEY) {
+      return c.json({ error: "unauthorized" }, 401);
+    }
+    const body = await c.req.json().catch(() => null);
+    if (!body?.query) return c.json({ error: "Missing query" }, 400);
+    try {
+      return c.json(await searchTweets(body.query.trim(), Math.min(body.count || 10, 20)));
+    } catch (e: any) {
+      return c.json({ error: e.message }, 502);
+    }
+  });
+}
+
 export function registerRoutes(app: Hono) {
   // Profile scraping
   app.post("/api/profile", async (c) => {
