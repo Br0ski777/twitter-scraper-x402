@@ -1,5 +1,20 @@
 import type { Hono } from "hono";
 
+
+// ATXP: requirePayment only fires inside an ATXP context (set by atxpHono middleware).
+// For raw x402 requests, the existing @x402/hono middleware handles the gate.
+// If neither protocol is active (ATXP_CONNECTION unset), tryRequirePayment is a no-op.
+async function tryRequirePayment(price: number): Promise<void> {
+  if (!process.env.ATXP_CONNECTION) return;
+  try {
+    const { requirePayment } = await import("@atxp/server");
+    const BigNumber = (await import("bignumber.js")).default;
+    await requirePayment({ price: BigNumber(price) });
+  } catch (e: any) {
+    if (e?.code === -30402) throw e;
+  }
+}
+
 // ─── Cache ──────────────────────────────────────────────────────────────────
 
 interface CacheEntry { data: any; ts: number }
@@ -338,6 +353,7 @@ export function registerInternalRoutes(app: Hono) {
 export function registerRoutes(app: Hono) {
   // Profile scraping
   app.post("/api/profile", async (c) => {
+    await tryRequirePayment(0.005);
     const body = await c.req.json().catch(() => null);
     if (!body?.username) {
       return c.json({ error: "Missing required field: username" }, 400);
@@ -358,6 +374,7 @@ export function registerRoutes(app: Hono) {
 
   // Tweet search
   app.post("/api/search", async (c) => {
+    await tryRequirePayment(0.005);
     const body = await c.req.json().catch(() => null);
     if (!body?.query) {
       return c.json({ error: "Missing required field: query" }, 400);
@@ -380,6 +397,7 @@ export function registerRoutes(app: Hono) {
 
   // User tweets
   app.post("/api/tweets", async (c) => {
+    await tryRequirePayment(0.005);
     const body = await c.req.json().catch(() => null);
     if (!body?.username) {
       return c.json({ error: "Missing required field: username" }, 400);
