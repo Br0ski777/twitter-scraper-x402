@@ -12,7 +12,7 @@
   "remotes": [
     {
       "type": "sse",
-      "url": "https://twitter-scraper-x402-production.up.railway.app/mcp"
+      "url": "https://twitter-scraper.api.klymax402.com/mcp"
     }
   ]
 }
