@@ -37,9 +37,9 @@ Any x402-aware client ([`@x402/fetch`](https://www.npmjs.com/package/@x402/fetch
 
 | Tool | Method | Path | Price | Description |
 |---|---|---|---|---|
-| `twitter_scrape_profile` | POST | `/api/profile` | $0.005 | Scrape a Twitter/X user profile -- bio, stats, avatar, banner, pinned tweet, verification status. |
-| `twitter_search_tweets` | POST | `/api/search` | $0.005 | Search Twitter/X for tweets matching a query -- returns up to 20 results with text, engagement, author, and timestamps. |
-| `twitter_get_user_tweets` | POST | `/api/tweets` | $0.005 | Get recent tweets from a specific Twitter/X user -- returns their latest posts with engagement metrics. |
+| `twitter_scrape_profile` | POST | `/api/profile` | $0.012 | Scrape a Twitter/X user profile -- bio, stats, avatar, banner, pinned tweet, verification status. |
+| `twitter_search_tweets` | POST | `/api/search` | $0.012 | Search Twitter/X for tweets matching a query -- returns up to 20 results with text, engagement, author, and timestamps. |
+| `twitter_get_user_tweets` | POST | `/api/tweets` | $0.012 | Get recent tweets from a specific Twitter/X user -- returns their latest posts with engagement metrics. |
 
 ### `twitter_scrape_profile`
 
