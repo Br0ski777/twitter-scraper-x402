@@ -9,7 +9,7 @@ export const API_CONFIG: ApiConfig = {
     {
       method: "POST",
       path: "/api/profile",
-      price: "$0.005",
+      price: "$0.012",
       description: "Scrape a Twitter/X user profile -- bio, stats, avatar, banner, pinned tweet, verification status.",
       toolName: "twitter_scrape_profile",
       toolDescription:
@@ -67,7 +67,7 @@ Do NOT use for tweet search -- use twitter_search_tweets instead. Do NOT use for
     {
       method: "POST",
       path: "/api/search",
-      price: "$0.005",
+      price: "$0.012",
       description: "Search Twitter/X for tweets matching a query -- returns up to 20 results with text, engagement, author, and timestamps.",
       toolName: "twitter_search_tweets",
       toolDescription:
@@ -133,7 +133,7 @@ Do NOT use for profile data -- use twitter_scrape_profile instead. Do NOT use fo
     {
       method: "POST",
       path: "/api/tweets",
-      price: "$0.005",
+      price: "$0.012",
       description: "Get recent tweets from a specific Twitter/X user -- returns their latest posts with engagement metrics.",
       toolName: "twitter_get_user_tweets",
       toolDescription:
