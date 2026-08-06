@@ -47,9 +47,13 @@ const HEADERS = {
 
 // ─── Nitter Instances (public, no auth needed) ──────────────────────────────
 
+// Instances verifiees le 06/08/2026 par appel reel sur /jack :
+//   nitter.cz            -> 200, 74 Ko, profil exploitable   (redirige vers nt.vern.cc)
+//   nitter.net           -> 200 mais **0 octet**             (piege : `resp.ok` est vrai)
+//   nitter.poast.org     -> 403
+//   nitter.privacydev.net-> echec TLS, ne resout plus
+// L'ordre compte : la premiere instance qui rend un corps exploitable gagne.
 const NITTER_INSTANCES = [
-  "https://nitter.privacydev.net",
-  "https://nitter.poast.org",
   "https://nitter.cz",
   "https://nitter.net",
 ];
@@ -63,7 +67,9 @@ async function fetchWithFallback(path: string): Promise<string | null> {
         signal: AbortSignal.timeout(8000),
       });
       if (resp.ok) {
-        return await resp.text();
+        const text = await resp.text();
+        // nitter.net repond 200 avec un corps vide : `resp.ok` ne suffit pas.
+        if (text.length >= 500) return text;
       }
     } catch { /* try next */ }
   }
@@ -119,12 +125,72 @@ function parseNumber(text: string): number {
   return Math.round(num * mult);
 }
 
+// ─── Syndication publique Twitter/X ─────────────────────────────────────────
+// Source primaire des profils : la page de syndication embarque l'objet
+// utilisateur complet dans son JSON `__NEXT_DATA__`. Pas de cle, pas d'auth.
+// Mesure du 06/08/2026 sur @jack : followers_count, statuses_count, created_at,
+// description et location tous presents -- la ou Nitter ne rend plus rien.
+async function fetchSyndicationUser(screenName: string): Promise<any | null> {
+  try {
+    const resp = await fetch(
+      `https://syndication.twitter.com/srv/timeline-profile/screen-name/${encodeURIComponent(screenName)}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Referer: "https://platform.twitter.com/",
+        },
+        signal: AbortSignal.timeout(12000),
+      },
+    );
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+    if (!m) return null;
+    const data = JSON.parse(m[1]);
+    // L'objet utilisateur est porte par les tweets du timeline, pas par
+    // `contextProvider` qui ne contient que des drapeaux de rendu. Le timeline
+    // incluant les retweets, on ne retient que l'auteur demande : rendre le
+    // profil d'un tiers serait pire que ne rien rendre du tout.
+    const wanted = screenName.replace("@", "").toLowerCase();
+    for (const entry of data?.props?.pageProps?.timeline?.entries || []) {
+      const u = entry?.content?.tweet?.user;
+      if (u && String(u.screen_name || "").toLowerCase() === wanted) return u;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function scrapeProfile(username: string): Promise<ProfileData> {
   const cacheKey = `profile_${username}`;
   const c = cached<ProfileData>(cacheKey);
   if (c) return c;
 
-  // Try Nitter first
+  // Source primaire : syndication publique (Nitter ne rend plus rien).
+  const user = await fetchSyndicationUser(username);
+  if (user) {
+    const result: ProfileData = {
+      username: user.screen_name || username,
+      displayName: user.name || username,
+      bio: user.description || "",
+      followers: user.followers_count || 0,
+      following: user.friends_count || 0,
+      tweetCount: user.statuses_count || 0,
+      verified: Boolean(user.verified || user.is_blue_verified),
+      createdAt: user.created_at || "",
+      avatarUrl: user.profile_image_url_https || "",
+      bannerUrl: user.profile_banner_url || "",
+      location: user.location || "",
+      website: user.entities?.url?.urls?.[0]?.expanded_url || "",
+      pinnedTweet: null,
+    };
+    setCache(cacheKey, result);
+    return result;
+  }
+
+  // Repli : Nitter.
   const html = await fetchWithFallback(`/${username}`);
 
   if (html) {
